@@ -38,6 +38,10 @@ class CreditsState extends MusicBeatState
 		#end
 
 		var defaultList:Array<Array<String>> = [ //Name - Icon name - Description - Link - BG Color
+			[""],
+			["Whitelist Engine"],
+			["Whitelist", "missing_icon", "Creator of Whitelist Engine", "", "FFFFFF"],
+			[""],
 			['Template Team'],
 			['Ali Alafandy', 'alafandy', 'Templator of Psych Engine', 'https://youtube.com/@alialafandy', '000080'],
 			['Brenninho840', 'breno', 'Compiler of Psych Engine', 'https://youtube.com/@RBrenninho8840', '008000'],
