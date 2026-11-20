@@ -16,6 +16,7 @@ class FFIEditorState extends MusicBeatState
 
     var entries:Array<String> = [];
     var selected:Int = 0;
+    var scrollOffset:Int = 0;
 
     var pathText:FlxText;
     var statusText:FlxText;
@@ -155,17 +156,32 @@ class FFIEditorState extends MusicBeatState
     }
 
     function updateSelection()
-    {
-        for (i in 0...fileList.members.length)
         {
-            var item = fileList.members[i];
-
-            if (item != null)
-                item.color = (i == selected)
-                    ? FlxColor.YELLOW
-                    : FlxColor.WHITE;
+            var visibleRows = Std.int((FlxG.height - 160) / 28);
+            visibleRows = Std.int(Math.max(1, visibleRows));
+        
+            if (selected < scrollOffset)
+                scrollOffset = selected;
+        
+            if (selected >= scrollOffset + visibleRows)
+                scrollOffset = selected - visibleRows + 1;
+        
+            for (i in 0...fileList.members.length)
+            {
+                var item = fileList.members[i];
+        
+                if (item != null)
+                {
+                    item.y = 112 + (i - scrollOffset) * 28;
+                    item.visible = i >= scrollOffset
+                        && i < scrollOffset + visibleRows;
+        
+                    item.color = (i == selected)
+                        ? FlxColor.YELLOW
+                        : FlxColor.WHITE;
+                }
+            }
         }
-    }
 
     function openSelected()
     {
@@ -409,10 +425,10 @@ class FFIEditorState extends MusicBeatState
 
             if (controls.ACCEPT)
                 openSelected();
-
-            if (controls.BACK)
-                goBack();
         }
+
+        if (controls.BACK)
+            goBack();
 
         if (FlxG.mouse.justPressed)
         {
@@ -432,11 +448,4 @@ class FFIEditorState extends MusicBeatState
         super.update(elapsed);
     }
 
-    override function destroy()
-    {
-        if (editor != null)
-            editor.destroy();
 
-        super.destroy();
-    }
-}
