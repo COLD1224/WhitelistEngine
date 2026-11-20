@@ -182,7 +182,9 @@ class FFIEditorState extends MusicBeatState
             currentPath = fullPath;
             refreshDirectory();
         }
-        else if (Path.extension(cleanName).toLowerCase() == 'txt')
+        else if (['txt', 'lua', 'json', 'xml', 'hx'].contains(
+            Path.extension(cleanName).toLowerCase()
+        ))
         {
             try
             {
@@ -198,7 +200,7 @@ class FFIEditorState extends MusicBeatState
         }
         else
         {
-            statusText.text = 'This version edits .txt files only.';
+            statusText.text = 'Unsupported file type.';
         }
     }
 
@@ -233,20 +235,35 @@ class FFIEditorState extends MusicBeatState
     }
 
     function saveCurrentFile()
-    {
-        if (currentFile == null)
-            return;
+        {
+            if (currentFile == null)
+                return;
 
-        try
-        {
-            File.saveContent(currentFile, editor.text);
-            statusText.text = 'Saved ' + Path.withoutDirectory(currentFile);
+            var extension = Path.extension(currentFile).toLowerCase();
+
+            if (extension == 'json')
+            {
+                try
+                {
+                    haxe.Json.parse(editor.text);
+                }
+                catch (e:Dynamic)
+                {
+                    statusText.text = 'Invalid JSON: $e';
+                    return;
+                }
+            }
+
+            try
+            {
+                File.saveContent(currentFile, editor.text);
+                statusText.text = 'Saved ' + Path.withoutDirectory(currentFile);
+            }
+            catch (e:Dynamic)
+            {
+                statusText.text = 'Could not save file: $e';
+            }
         }
-        catch (e:Dynamic)
-        {
-            statusText.text = 'Could not save file: $e';
-        }
-    }
 
     function closeCurrentFile()
     {
