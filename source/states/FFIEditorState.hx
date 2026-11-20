@@ -21,6 +21,7 @@ class FFIEditorState extends MusicBeatState
     var statusText:FlxText;
     var fileList:FlxTypedGroup<FlxText>;
     var editor:FlxInputText;
+    var nameInput:FlxInputText;
 
     public function new(modFolder:String)
     {
@@ -66,6 +67,12 @@ class FFIEditorState extends MusicBeatState
         editor.fieldHeight = FlxG.height - 160;
         editor.visible = false;
         add(editor);
+        nameInput = new FlxInputText(
+            20, FlxG.height - 65, 250, '',
+            16, FlxColor.WHITE, FlxColor.BLACK
+        );
+        nameInput.visible = true;
+        add(nameInput);
 
         add(new FlxButton(20, 76, 'OPEN', openSelected));
 
@@ -76,7 +83,9 @@ class FFIEditorState extends MusicBeatState
 
         add(new FlxButton(490, 76, 'SAVE', saveCurrentFile));
         add(new FlxButton(580, 76, 'CLOSE FILE', closeCurrentFile));
+        add(new FlxButton(810, 76, 'RENAME', renameSelected));
         add(new FlxButton(FlxG.width - 110, 12, 'BACK', goBack));
+        add(new FlxButton(700, 76, 'NEW FOLDER', createFolder));
 
         statusText = new FlxText(
             20, FlxG.height - 30, FlxG.width - 40, '', 14
@@ -253,6 +262,84 @@ class FFIEditorState extends MusicBeatState
             catch (e:Dynamic)
             {
                 statusText.text = 'Could not create file: $e';
+            }
+        }
+
+    function createFolder()
+        {
+            var name = 'new_folder';
+            var number = 1;
+        
+            while (FileSystem.exists(Path.join([currentPath, name])))
+            {
+                name = 'new_folder_$number';
+                number++;
+            }
+        
+            var fullPath = Path.join([currentPath, name]);
+        
+            try
+            {
+                FileSystem.createDirectory(fullPath);
+                refreshDirectory();
+                statusText.text = 'Created folder $name.';
+            }
+            catch (e:Dynamic)
+            {
+                statusText.text = 'Could not create folder: $e';
+            }
+        }
+
+    function renameSelected()
+        {
+            if (entries.length == 0 || selected < 0 || selected >= entries.length)
+                return;
+        
+            var oldName = entries[selected];
+        
+            if (oldName == '..')
+            {
+                statusText.text = 'Cannot rename the parent folder.';
+                return;
+            }
+        
+            var newName = StringTools.trim(nameInput.text);
+        
+            if (newName == '' || newName == '.' || newName == '..'
+                || newName.indexOf('/') != -1 || newName.indexOf('\\') != -1)
+            {
+                statusText.text = 'Enter a valid name.';
+                return;
+            }
+        
+            var isFolder = StringTools.endsWith(oldName, '/');
+            var cleanOldName = isFolder
+                ? oldName.substr(0, oldName.length - 1)
+                : oldName;
+        
+            var oldPath = Path.join([currentPath, cleanOldName]);
+            var newPath = Path.join([currentPath, newName]);
+        
+            if (FileSystem.exists(newPath))
+            {
+                statusText.text = 'That name already exists.';
+                return;
+            }
+        
+            try
+            {
+                FileSystem.rename(oldPath, newPath);
+        
+                if (currentFile == oldPath)
+                    currentFile = newPath;
+        
+                nameInput.text = '';
+                refreshDirectory();
+                statusText.text = 'Renamed to $newName.';
+            }
+            catch (e:Dynamic)
+            {
+                statusText.text = 'Could not rename: $e';
             }
         }
 
