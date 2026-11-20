@@ -68,9 +68,14 @@ class FFIEditorState extends MusicBeatState
         add(editor);
 
         add(new FlxButton(20, 76, 'OPEN', openSelected));
-        add(new FlxButton(110, 76, 'NEW .TXT', createTextFile));
-        add(new FlxButton(380, 76, 'SAVE', saveCurrentFile));
-        add(new FlxButton(470, 76, 'CLOSE FILE', closeCurrentFile));
+
+        add(new FlxButton(110, 76, 'NEW TXT', function() createFile('txt')));
+        add(new FlxButton(200, 76, 'NEW LUA', function() createFile('lua')));
+        add(new FlxButton(290, 76, 'NEW JSON', function() createFile('json')));
+        add(new FlxButton(380, 76, 'NEW XML', function() createFile('xml')));
+
+        add(new FlxButton(490, 76, 'SAVE', saveCurrentFile));
+        add(new FlxButton(580, 76, 'CLOSE FILE', closeCurrentFile));
         add(new FlxButton(FlxG.width - 110, 12, 'BACK', goBack));
 
         statusText = new FlxText(
@@ -204,35 +209,52 @@ class FFIEditorState extends MusicBeatState
         }
     }
 
-    function createTextFile()
-    {
-        var name = 'new_file.txt';
-        var number = 1;
-
-        while (FileSystem.exists(Path.join([currentPath, name])))
+    function createFile(extension:String)
         {
-            name = 'new_file_$number.txt';
-            number++;
+            var name = 'new_file.' + extension;
+            var number = 1;
+        
+            while (FileSystem.exists(Path.join([currentPath, name])))
+            {
+                name = 'new_file_$number.' + extension;
+                number++;
+            }
+        
+            var fullPath = Path.join([currentPath, name]);
+        
+            try
+            {
+                var initialContent = '';
+
+                if (extension == 'lua')
+                {
+                    initialContent =
+                        'function onCreate()\n' +
+                        '    debugPrint("Lua script loaded!")\n' +
+                        'end\n\n' +
+                        'function onUpdate(elapsed)\n' +
+                        '    -- Runs every frame.\n' +
+                        'end\n\n' +
+                        'function onBeatHit()\n' +
+                        '    -- Runs on every beat.\n' +
+                        'end\n';
+                
+                }
+                
+                File.saveContent(fullPath, initialContent);
+                refreshDirectory();
+        
+                currentFile = fullPath;
+                editor.text = initialContent;
+                editor.visible = true;
+        
+                statusText.text = 'Created $name.';
+            }
+            catch (e:Dynamic)
+            {
+                statusText.text = 'Could not create file: $e';
+            }
         }
-
-        var fullPath = Path.join([currentPath, name]);
-
-        try
-        {
-            File.saveContent(fullPath, '');
-            refreshDirectory();
-
-            currentFile = fullPath;
-            editor.text = '';
-            editor.visible = true;
-
-            statusText.text = 'Created $name.';
-        }
-        catch (e:Dynamic)
-        {
-            statusText.text = 'Could not create file: $e';
-        }
-    }
 
     function saveCurrentFile()
         {
