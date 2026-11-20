@@ -115,6 +115,7 @@
 
 	<haxelib name="flixel"/>
 	<haxelib name="flixel-addons" version="3.2.2"/>
+	<haxelib name="flixel-ui" version="2.6.1"/>
 	<haxelib name="tjson" version="1.4.0"/>
 
 	<!--Psych stuff needed-->
