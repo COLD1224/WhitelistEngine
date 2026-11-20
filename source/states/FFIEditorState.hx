@@ -447,5 +447,5 @@ class FFIEditorState extends MusicBeatState
 
         super.update(elapsed);
     }
-
+}
 
