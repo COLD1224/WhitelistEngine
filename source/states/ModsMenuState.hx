@@ -222,6 +222,28 @@ class ModsMenuState extends MusicBeatState
 
 		var buttonsX = bgButtons.x + 320;
 		var buttonsY = bgButtons.y + 10;
+		var filesButton = new MenuButton(
+    		bgButtons.x + 10,
+    		buttonsY,
+    		280,
+    		80,
+    		"FILES",
+    		null,
+    		function()
+    		{
+        		var curMod:ModItem = modsGroup.members[curSelectedMod];
+
+        		if (curMod != null)
+        		{
+            		MusicBeatState.switchState(
+                		new FFIEditorState(curMod.folder)
+            		);
+        		}
+    		}
+		);
+
+		add(filesButton);
+		buttons.push(filesButton);
 
 		var button = new MenuButton(buttonsX, buttonsY, 80, 80, Paths.image('modsMenuButtons'), function() moveModToPosition(0), 54, 54); //Move to the top
 		button.icon.animation.add('icon', [0]);
