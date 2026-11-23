@@ -307,6 +307,7 @@ class PauseSubState extends MusicBeatSubstate
 					PlayState.instance.finishSong(true);
 				case 'Toggle Botplay':
 					PlayState.instance.cpuControlled = !PlayState.instance.cpuControlled;
+					ClientPrefs.data.gameplaySettings.set('botplay', PlayState.instance.cpuControlled);
 					PlayState.changedDifficulty = true;
 					PlayState.instance.botplayTxt.visible = PlayState.instance.cpuControlled;
 					PlayState.instance.botplayTxt.alpha = 1;
