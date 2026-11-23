@@ -242,12 +242,15 @@ class Controls
 
 	@:noCompletion
 	private function get_mobileC():Bool
-	{
-		if (ClientPrefs.data.controlsAlpha >= 0.1)
-			return true;
-		else
-			return false;
-	}
+		{
+		    if (ClientPrefs.data.pcControls)
+		        return false;
+		
+		    if (ClientPrefs.data.controlsAlpha >= 0.1)
+		        return true;
+		    else
+		        return false;
+		}
 
 	// IGNORE THESE/ karim: no.
 	public static var instance:Controls;
