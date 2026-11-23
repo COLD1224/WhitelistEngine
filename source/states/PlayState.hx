@@ -625,7 +625,7 @@ class PlayState extends MusicBeatState
 
 		#if mobile
 		addMobileControls();
-		mobileControls.instance.visible = true;
+		mobileControls.instance.visible = !ClientPrefs.data.pcControls;
 		mobileControls.onButtonDown.add(onButtonPress);
 		mobileControls.onButtonUp.add(onButtonRelease);
 		#end
