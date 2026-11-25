@@ -515,25 +515,29 @@ class PlayState extends MusicBeatState
 
 		noteGroup.add(strumLineNotes);
 
-		if(ClientPrefs.data.timeBarType == 'Song Name')
+		if (copyAngle)
+		    angle = strumDirection - 90 + strumAngle + offsetAngle;
+		
+		if(copyAlpha)
+		    alpha = strumAlpha * multAlpha;
+		
+		if(copyX || copyY)
 		{
-			timeTxt.size = 24;
-			timeTxt.y += 3;
-		}
-
-		generateSong();
-
-		noteGroup.add(grpNoteSplashes);
-
-		camFollow = new FlxObject();
-		camFollow.setPosition(camPos.x, camPos.y);
-		camPos.put();
-
-		if (prevCamFollow != null)
-		{
-			camFollow = prevCamFollow;
-			prevCamFollow = null;
-		}
+		    var angleDir:Float = strumDirection * Math.PI / 180;
+		    if(copyX)
+		        x = strumX + offsetX + Math.cos(angleDir) * distance;
+		
+		    if(copyY)
+		    {
+		        y = strumY + offsetY + correctionOffset + Math.sin(angleDir) * distance;
+				camPos.put();
+		
+				if (prevCamFollow != null)
+				{
+					camFollow = prevCamFollow;
+					prevCamFollow = null;
+				}
+				
 		add(camFollow);
 
 		FlxG.camera.follow(camFollow, LOCKON, 0);
@@ -1139,7 +1143,7 @@ class PlayState extends MusicBeatState
 				daNote.ignoreNote = true;
 
 				//if(!ClientPrefs.data.lowQuality || !cpuControlled) daNote.kill();
-				unspawnNotes.remove(daNote);
+				unspawnNotes.splice(i, 1);
 				daNote.destroy();
 			}
 			--i;
@@ -1713,7 +1717,8 @@ class PlayState extends MusicBeatState
 	{
 		if(!inCutscene && !paused && !freezeCamera) {
 			FlxG.camera.followLerp = 0.04 * cameraSpeed * playbackRate;
-			var idleAnim:Bool = (boyfriend.getAnimationName().startsWith('idle') || boyfriend.getAnimationName().startsWith('danceLeft') || boyfriend.getAnimationName().startsWith('danceRight'));
+			var animName:String = boyfriend.getAnimationName();
+			var idleAnim:Bool = (animName.startsWith('idle') || animName.startsWith('danceLeft') || animName.startsWith('danceRight'));
 			if(!startingSong && !endingSong && idleAnim) {
 				boyfriendIdleTime += elapsed;
 				if(boyfriendIdleTime >= 0.15) { // Kind of a mercy thing for making the achievement easier to get as it's apparently frustrating to some playerss
@@ -1822,11 +1827,10 @@ class PlayState extends MusicBeatState
 				notes.insert(0, dunceNote);
 				dunceNote.spawned = true;
 
-				callOnLuas('onSpawnNote', [notes.members.indexOf(dunceNote), dunceNote.noteData, dunceNote.noteType, dunceNote.isSustainNote, dunceNote.strumTime]);
+				callOnLuas('onSpawnNote', [0, dunceNote.noteData, dunceNote.noteType, dunceNote.isSustainNote, dunceNote.strumTime]);
 				callOnHScript('onSpawnNote', [dunceNote]);
 
-				var index:Int = unspawnNotes.indexOf(dunceNote);
-				unspawnNotes.splice(index, 1);
+				unspawnNotes.splice(0, 1);
 			}
 		}
 
@@ -2758,34 +2762,28 @@ class PlayState extends MusicBeatState
 		var ret:Dynamic = callOnScripts('onKeyPressPre', [key]);
 		if(ret == LuaUtils.Function_Stop) return;
 
-		// more accurate hit time for the ratings?
-		var lastTime:Float = Conductor.songPosition;
-		if(Conductor.songPosition >= 0) Conductor.songPosition = FlxG.sound.music.time + Conductor.offset;
-
-		// obtain notes that the player can hit
-		var plrInputNotes:Array<Note> = notes.members.filter(function(n:Note):Bool {
-			var canHit:Bool = n != null && !strumsBlocked[n.noteData] && n.canBeHit && n.mustPress && !n.tooLate && !n.wasGoodHit && !n.blockHit;
-			return canHit && !n.isSustainNote && n.noteData == key;
-		});
-		plrInputNotes.sort(sortHitNotes);
-
-		if (plrInputNotes.length != 0) { // slightly faster than doing `> 0` lol
-			var funnyNote:Note = plrInputNotes[0]; // front note
-
-			if (plrInputNotes.length > 1) {
-				var doubleNote:Note = plrInputNotes[1];
-
-				if (doubleNote.noteData == funnyNote.noteData) {
-					// if the note has a 0ms distance (is on top of the current note), kill it
-					if (Math.abs(doubleNote.strumTime - funnyNote.strumTime) < 1.0)
-						invalidateNote(doubleNote);
-					else if (doubleNote.strumTime < funnyNote.strumTime)
-					{
-						// replace the note if its ahead of time (or at least ensure "doubleNote" is ahead)
-						funnyNote = doubleNote;
-					}
-				}
+		
+		// Find the two best notes without allocating or sorting another array.
+		var funnyNote:Note = null;
+		var doubleNote:Note = null;
+		
+		for (n in notes.members)
+		{
+		    if (n == null || strumsBlocked[n.noteData] || !n.canBeHit
+		        || !n.mustPress || n.tooLate || n.wasGoodHit
+		        || n.blockHit || n.isSustainNote || n.noteData != key)
+		        continue;
+		
+		if (funnyNote != null)
+		{
+			if (doubleNote != null && doubleNote.noteData == funnyNote.noteData)
+			{
+				if (Math.abs(doubleNote.strumTime - funnyNote.strumTime) < 1.0)
+					invalidateNote(doubleNote);
+				else if (doubleNote.strumTime < funnyNote.strumTime)
+					funnyNote = doubleNote;
 			}
+
 			goodNoteHit(funnyNote);
 		}
 		else
