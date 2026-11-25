@@ -2752,6 +2752,73 @@ class PlayState extends MusicBeatState
 		}
 	}
 
+	private function keyPressed(key:Int)
+	{
+		if(cpuControlled || paused || inCutscene || key < 0 || key >= playerStrums.length || !generatedMusic || endingSong || boyfriend.stunned) return;
+
+		var ret:Dynamic = callOnScripts('onKeyPressPre', [key]);
+		if(ret == LuaUtils.Function_Stop) return;
+
+		// More accurate hit time for the ratings.
+		var lastTime:Float = Conductor.songPosition;
+		if(Conductor.songPosition >= 0) Conductor.songPosition = FlxG.sound.music.time + Conductor.offset;
+
+		// Find the two best notes without allocating or sorting another array.
+		var funnyNote:Note = null;
+		var doubleNote:Note = null;
+
+		for (n in notes.members)
+		{
+			if (n == null || strumsBlocked[n.noteData] || !n.canBeHit
+				|| !n.mustPress || n.tooLate || n.wasGoodHit
+				|| n.blockHit || n.isSustainNote || n.noteData != key)
+				continue;
+
+			if (funnyNote == null || sortHitNotes(n, funnyNote) < 0)
+			{
+				doubleNote = funnyNote;
+				funnyNote = n;
+			}
+			else if (doubleNote == null || sortHitNotes(n, doubleNote) < 0)
+			{
+				doubleNote = n;
+			}
+		}
+
+		if (funnyNote != null)
+		{
+			if (doubleNote != null && doubleNote.noteData == funnyNote.noteData)
+			{
+				if (Math.abs(doubleNote.strumTime - funnyNote.strumTime) < 1.0)
+					invalidateNote(doubleNote);
+				else if (doubleNote.strumTime < funnyNote.strumTime)
+					funnyNote = doubleNote;
+			}
+
+			goodNoteHit(funnyNote);
+		}
+		else
+		{
+			if (ClientPrefs.data.ghostTapping)
+				callOnScripts('onGhostTap', [key]);
+			else
+				noteMissPress(key);
+		}
+
+		// Needed for the "Just the Two of Us" achievement.
+		if(!keysPressed.contains(key)) keysPressed.push(key);
+
+		Conductor.songPosition = lastTime;
+
+		var spr:StrumNote = playerStrums.members[key];
+		if(strumsBlocked[key] != true && spr != null && spr.animation.curAnim.name != 'confirm')
+		{
+			spr.playAnim('pressed');
+			spr.resetAnim = 0;
+		}
+		callOnScripts('onKeyPress', [key]);
+	}
+
 	public static function sortHitNotes(a:Note, b:Note):Int
 	{
 		if (a.lowPriority && !b.lowPriority)
