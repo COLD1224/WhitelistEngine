@@ -515,29 +515,25 @@ class PlayState extends MusicBeatState
 
 		noteGroup.add(strumLineNotes);
 
-		if (copyAngle)
-		    angle = strumDirection - 90 + strumAngle + offsetAngle;
-		
-		if(copyAlpha)
-		    alpha = strumAlpha * multAlpha;
-		
-		if(copyX || copyY)
+		if(ClientPrefs.data.timeBarType == 'Song Name')
 		{
-		    var angleDir:Float = strumDirection * Math.PI / 180;
-		    if(copyX)
-		        x = strumX + offsetX + Math.cos(angleDir) * distance;
-		
-		    if(copyY)
-		    {
-		        y = strumY + offsetY + correctionOffset + Math.sin(angleDir) * distance;
-				camPos.put();
-		
-				if (prevCamFollow != null)
-				{
-					camFollow = prevCamFollow;
-					prevCamFollow = null;
-				}
-				
+			timeTxt.size = 24;
+			timeTxt.y += 3;
+		}
+
+		generateSong();
+
+		noteGroup.add(grpNoteSplashes);
+
+		camFollow = new FlxObject();
+		camFollow.setPosition(camPos.x, camPos.y);
+		camPos.put();
+
+		if (prevCamFollow != null)
+		{
+			camFollow = prevCamFollow;
+			prevCamFollow = null;
+		}
 		add(camFollow);
 
 		FlxG.camera.follow(camFollow, LOCKON, 0);
@@ -2738,6 +2734,7 @@ class PlayState extends MusicBeatState
 	}
 
 	public var strumsBlocked:Array<Bool> = [];
+
 	private function onKeyPress(event:KeyboardEvent):Void
 	{
 
@@ -2755,60 +2752,27 @@ class PlayState extends MusicBeatState
 		}
 	}
 
-	private function keyPressed(key:Int)
-	{
-		if(cpuControlled || paused || inCutscene || key < 0 || key >= playerStrums.length || !generatedMusic || endingSong || boyfriend.stunned) return;
+		noteGroup.add(strumLineNotes);
 
-		var ret:Dynamic = callOnScripts('onKeyPressPre', [key]);
-		if(ret == LuaUtils.Function_Stop) return;
-
-		
-		// Find the two best notes without allocating or sorting another array.
-		var funnyNote:Note = null;
-		var doubleNote:Note = null;
-		
-		for (n in notes.members)
+		if(ClientPrefs.data.timeBarType == 'Song Name')
 		{
-		    if (n == null || strumsBlocked[n.noteData] || !n.canBeHit
-		        || !n.mustPress || n.tooLate || n.wasGoodHit
-		        || n.blockHit || n.isSustainNote || n.noteData != key)
-		        continue;
-		
-		if (funnyNote != null)
-		{
-			if (doubleNote != null && doubleNote.noteData == funnyNote.noteData)
-			{
-				if (Math.abs(doubleNote.strumTime - funnyNote.strumTime) < 1.0)
-					invalidateNote(doubleNote);
-				else if (doubleNote.strumTime < funnyNote.strumTime)
-					funnyNote = doubleNote;
-			}
-
-			goodNoteHit(funnyNote);
-		}
-		else
-		{
-			if (ClientPrefs.data.ghostTapping)
-				callOnScripts('onGhostTap', [key]);
-			else
-				noteMissPress(key);
+			timeTxt.size = 24;
+			timeTxt.y += 3;
 		}
 
-		// Needed for the  "Just the Two of Us" achievement.
-		//									- Shadow Mario
-		if(!keysPressed.contains(key)) keysPressed.push(key);
+		generateSong();
 
-		//more accurate hit time for the ratings? part 2 (Now that the calculations are done, go back to the time it was before for not causing a note stutter)
-		Conductor.songPosition = lastTime;
+		noteGroup.add(grpNoteSplashes);
 
-		var spr:StrumNote = playerStrums.members[key];
-		if(strumsBlocked[key] != true && spr != null && spr.animation.curAnim.name != 'confirm')
+		camFollow = new FlxObject();
+		camFollow.setPosition(camPos.x, camPos.y);
+		camPos.put();
+
+		if (prevCamFollow != null)
 		{
-			spr.playAnim('pressed');
-			spr.resetAnim = 0;
+			camFollow = prevCamFollow;
+			prevCamFollow = null;
 		}
-		callOnScripts('onKeyPress', [key]);
-	}
 
 	public static function sortHitNotes(a:Note, b:Note):Int
 	{
