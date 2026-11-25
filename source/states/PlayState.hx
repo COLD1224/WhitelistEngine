@@ -2752,28 +2752,6 @@ class PlayState extends MusicBeatState
 		}
 	}
 
-		noteGroup.add(strumLineNotes);
-
-		if(ClientPrefs.data.timeBarType == 'Song Name')
-		{
-			timeTxt.size = 24;
-			timeTxt.y += 3;
-		}
-
-		generateSong();
-
-		noteGroup.add(grpNoteSplashes);
-
-		camFollow = new FlxObject();
-		camFollow.setPosition(camPos.x, camPos.y);
-		camPos.put();
-
-		if (prevCamFollow != null)
-		{
-			camFollow = prevCamFollow;
-			prevCamFollow = null;
-		}
-
 	public static function sortHitNotes(a:Note, b:Note):Int
 	{
 		if (a.lowPriority && !b.lowPriority)
